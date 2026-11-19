@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokoKu Admin</title>
+<style>
+  :root { --bg:#f5f6fa; --surface:#fff; --text:#161a26; --muted:#6b7280; --border:#e6e8ef;
+    --primary:#6366f1; --primary-2:#8b5cf6; --danger:#dc2626; --ok:#16a34a; --warn:#f59e0b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0e1017; --surface:#171a24; --text:#eef0f7; --muted:#9aa1b4; --border:#262a39; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+  button { font:inherit; cursor:pointer; border:0; border-radius:10px; padding:9px 14px; font-weight:600; transition:.15s; }
+  .btn { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:#fff; }
+  .btn:hover { filter:brightness(1.08); }
+  .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+  .btn-danger { background:transparent; color:var(--danger); border:1px solid var(--danger); }
+  .muted { color:var(--muted); font-size:.85rem; }
+  header { background:var(--surface); border-bottom:1px solid var(--border); }
+  .nav { max-width:1200px; margin:0 auto; padding:14px 24px; display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .brand { font-weight:800; font-size:1.2rem; }
+  .brand span { color:var(--primary); }
+  main { max-width:1200px; margin:0 auto; padding:24px; }
+  .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px; margin-bottom:24px; }
+  .stat { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; }
+  .stat b { display:block; font-size:1.6rem; margin-top:4px; }
+  .bar { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .bar input { flex:1; min-width:200px; }
+  input, select, textarea { width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font:inherit; }
+  .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; min-width:720px; }
+  th, td { text-align:left; padding:12px 16px; border-bottom:1px solid var(--border); }
+  th { font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  tr:last-child td { border-bottom:0; }
+  .prod { display:flex; align-items:center; gap:12px; }
+  .prod img { width:44px; height:44px; border-radius:10px; object-fit:cover; background:var(--border); }
+  .pill { font-size:.72rem; padding:3px 10px; border-radius:999px; font-weight:700; background:#dcfce7; color:#166534; }
+  .pill.low { background:#fef3c7; color:#92400e; }
+  .pill.out { background:#fee2e2; color:#991b1b; }
+  .actions { display:flex; gap:6px; }
+  .overlay { position:fixed; inset:0; background:rgba(8,10,18,.5); display:none; z-index:20; }
+  .overlay.open { display:block; }
+  .modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:min(520px,94%); max-height:92vh; overflow-y:auto;
+    background:var(--surface); border-radius:20px; padding:24px; z-index:30; display:none; }
+  .modal.open { display:block; }
+  .modal h3 { margin:0 0 16px; }
+  label { display:block; font-size:.82rem; color:var(--muted); margin:10px 0 4px; }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .preview { margin-top:8px; height:140px; border-radius:12px; background:var(--bg); border:1px dashed var(--border); display:grid; place-items:center; overflow:hidden; color:var(--muted); font-size:.85rem; }
+  .preview img { width:100%; height:100%; object-fit:cover; }
+  .foot { display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+  .login { max-width:380px; margin:12vh auto; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:28px; }
+  .login h2 { margin-top:0; }
+  .login input { margin-bottom:10px; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); background:var(--text); color:var(--bg); padding:12px 22px;
+    border-radius:12px; z-index:50; opacity:0; pointer-events:none; transition:.25s; font-weight:600; }
+  .toast.show { opacity:1; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="loginBox">
+  <h2>🔐 Admin TokoKu</h2>
+  <p class="muted">Masuk dengan akun yang rolenya Admin.</p>
+  <input id="emailInput" type="email" placeholder="Email">
+  <input id="passInput" type="password" placeholder="Password">
+  <button class="btn" id="loginBtn" style="width:100%">Masuk</button>
+  <p class="muted" style="text-align:center"><a href="/">← Kembali ke toko</a></p>
+</div>
+
+<!-- PANEL -->
+<div id="panel" class="hidden">
+  <header>
+    <div class="nav">
+      <div class="brand">🛍️ Toko<span>Ku</span> Admin</div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="muted" id="who"></span>
+        <a href="/"><button class="btn-ghost">Lihat toko</button></a>
+        <button class="btn-ghost" id="logoutBtn">Keluar</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div style="display:flex;gap:8px;margin-bottom:18px">
+  <button class="btn" id="tabProducts">Produk</button>
+  <button class="btn-ghost" id="tabOrders">Pesanan</button>
+</div>
+<div id="ordersView" class="hidden">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>#</th><th>Pelanggan</th><th>Item</th><th>Total</th><th>Status</th><th></th></tr></thead>
+      <tbody id="orderRows"></tbody>
+    </table>
+  </div>
+</div>
+<div id="productsView">
+    <div class="stats">
+      <div class="stat"><span class="muted">Total produk</span><b id="sProducts">0</b></div>
+      <div class="stat"><span class="muted">Total stok</span><b id="sStock">0</b></div>
+      <div class="stat"><span class="muted">Stok menipis (≤ 5)</span><b id="sLow">0</b></div>
+      <div class="stat"><span class="muted">Nilai persediaan</span><b id="sValue">Rp 0</b></div>
+    </div>
+
+    <div class="bar">
+      <input id="search" placeholder="Cari produk…">
+      <select id="catFilter" style="width:auto"></select>
+      <button class="btn-ghost" id="addCatBtn">+ Kategori</button>
+      <button class="btn" id="addProdBtn">+ Produk</button>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Produk</th><th>Kategori</th><th>Harga</th><th>Stok</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="overlay" id="overlay"></div>
+
+<!-- MODAL PRODUK -->
+<div class="modal" id="prodModal">
+  <h3 id="prodTitle">Tambah produk</h3>
+  <label>Nama</label><input id="fName">
+  <label>Deskripsi</label><textarea id="fDesc" rows="2"></textarea>
+  <div class="two">
+    <div><label>Harga (Rp)</label><input id="fPrice" type="number" min="1"></div>
+    <div><label>Stok</label><input id="fStock" type="number" min="0"></div>
+  </div>
+  <label>Kategori</label><select id="fCat"></select>
+  <label>URL gambar (opsional)</label><input id="fImg" placeholder="https://...">
+  <div class="preview" id="preview">Pratinjau gambar</div>
+  <div class="foot">
+    <button class="btn-ghost" data-close>Batal</button>
+    <button class="btn" id="saveProd">Simpan</button>
+  </div>
+</div>
+
+<!-- MODAL KATEGORI -->
+<div class="modal" id="catModal">
+  <h3>Tambah kategori</h3>
+  <label>Nama kategori</label><input id="cName" placeholder="Misalnya: Buku">
+  <div class="foot">
+    <button class="btn-ghost" data-close>Batal</button>
+    <button class="btn" id="saveCat">Simpan</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const rupiah = n => "Rp " + Number(n).toLocaleString("id-ID");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const imgOf = p => p.imageUrl || ("https://picsum.photos/seed/" + encodeURIComponent(p.name) + "/200/200");
+
+let token = null, adminName = null, editingId = null;
+let products = [], categories = [];
+try { token = localStorage.getItem("adminToken"); adminName = localStorage.getItem("adminName"); } catch {}
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2400);
+}
+
+async function api(path, method = "GET", body) {
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = "Bearer " + token;
+  const res = await fetch("/api/" + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (res.status === 401) { logout(); throw new Error("Sesi habis, silakan masuk lagi."); }
+  if (res.status === 403) throw new Error("Akun ini bukan Admin.");
+  if (!res.ok) {
+    const firstErr = data?.errors ? Object.values(data.errors)[0][0] : null;
+    throw new Error(firstErr || (typeof data === "string" ? data : data?.title) || "Terjadi kesalahan.");
+  }
+  return data;
+}
+
+// ---------- Auth ----------
+function showPanel() {
+  const ok = !!token;
+  $("loginBox").classList.toggle("hidden", ok);
+  $("panel").classList.toggle("hidden", !ok);
+  if (ok) { $("who").textContent = adminName ? "Hai, " + adminName : ""; loadAll(); }
+}
+function logout() {
+  token = null; adminName = null;
+  try { localStorage.removeItem("adminToken"); localStorage.removeItem("adminName"); } catch {}
+  showPanel();
+}
+$("logoutBtn").onclick = logout;
+$("loginBtn").onclick = async () => {
+  try {
+    const r = await api("auth/login", "POST", { email: $("emailInput").value, password: $("passInput").value });
+    if (r.role !== "Admin") { toast("Akun ini bukan Admin."); return; }
+    token = r.token; adminName = r.name;
+    try { localStorage.setItem("adminToken", token); localStorage.setItem("adminName", adminName); } catch {}
+    showPanel();
+  } catch (e) { toast(e.message); }
+};
+
+// ---------- Data ----------
+async function loadAll() {
+  try {
+    [products, categories] = await Promise.all([api("products"), api("categories")]);
+    renderFilters(); renderStats(); renderRows();
+  } catch (e) { toast(e.message); }
+}
+function renderFilters() {
+  const cur = $("catFilter").value;
+  $("catFilter").innerHTML = '<option value="0">Semua kategori</option>' +
+    categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  $("catFilter").value = cur || "0";
+  $("fCat").innerHTML = categories.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+}
+function renderStats() {
+  $("sProducts").textContent = products.length;
+  $("sStock").textContent = products.reduce((s, p) => s + p.stock, 0);
+  $("sLow").textContent = products.filter(p => p.stock <= 5).length;
+  $("sValue").textContent = rupiah(products.reduce((s, p) => s + p.stock * p.price, 0));
+}
+function renderRows() {
+  const q = $("search").value.toLowerCase(), cat = +$("catFilter").value;
+  const list = products.filter(p => (cat === 0 || p.categoryId === cat) && p.name.toLowerCase().includes(q));
+  if (!list.length) { $("rows").innerHTML = '<tr><td colspan="5" class="muted" style="text-align:center;padding:30px">Tidak ada produk.</td></tr>'; return; }
+  $("rows").innerHTML = list.map(p => {
+    const pill = p.stock === 0 ? '<span class="pill out">Habis</span>' : p.stock <= 5 ? `<span class="pill low">${p.stock} (menipis)</span>` : `<span class="pill">${p.stock}</span>`;
+    return `<tr>
+      <td><div class="prod"><img src="${esc(imgOf(p))}" alt="" onerror="this.style.visibility='hidden'">
+        <div><strong>${esc(p.name)}</strong><div class="muted">${esc(p.description)}</div></div></div></td>
+      <td>${esc(p.categoryName)}</td>
+      <td>${rupiah(p.price)}</td>
+      <td>${pill}</td>
+      <td><div class="actions">
+        <button class="btn-ghost" data-edit="${p.id}">Ubah</button>
+        <button class="btn-danger" data-del="${p.id}">Hapus</button></div></td></tr>`;
+  }).join("");
+  $("rows").querySelectorAll("[data-edit]").forEach(b => b.onclick = () => openProduct(+b.dataset.edit));
+  $("rows").querySelectorAll("[data-del]").forEach(b => b.onclick = () => removeProduct(+b.dataset.del));
+}
+$("search").oninput = renderRows;
+$("catFilter").onchange = renderRows;
+
+// ---------- Modal ----------
+function openModal(id) { $("overlay").classList.add("open"); $(id).classList.add("open"); }
+function closeModals() { document.querySelectorAll(".modal").forEach(m => m.classList.remove("open")); $("overlay").classList.remove("open"); }
+$("overlay").onclick = closeModals;
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = closeModals);
+
+function updatePreview() {
+  const u = $("fImg").value.trim();
+  $("preview").innerHTML = u ? `<img src="${esc(u)}" alt="" onerror="this.parentNode.textContent='Gambar tidak bisa dimuat'">` : "Pratinjau gambar";
+}
+$("fImg").oninput = updatePreview;
+
+function openProduct(id) {
+  if (!categories.length) { toast("Buat kategori dulu."); return; }
+  editingId = id || null;
+  const p = id ? products.find(x => x.id === id) : null;
+  $("prodTitle").textContent = p ? "Ubah produk" : "Tambah produk";
+  $("fName").value = p?.name ?? ""; $("fDesc").value = p?.description ?? "";
+  $("fPrice").value = p?.price ?? ""; $("fStock").value = p?.stock ?? 0;
+  $("fCat").value = p?.categoryId ?? categories[0].id; $("fImg").value = p?.imageUrl ?? "";
+  updatePreview(); openModal("prodModal");
+}
+$("addProdBtn").onclick = () => openProduct(null);
+$("addCatBtn").onclick = () => { $("cName").value = ""; openModal("catModal"); };
+
+$("saveProd").onclick = async () => {
+  const body = {
+    name: $("fName").value, description: $("fDesc").value,
+    price: Number($("fPrice").value), stock: Number($("fStock").value),
+    categoryId: Number($("fCat").value), imageUrl: $("fImg").value.trim() || null
+  };
+  try {
+    if (editingId) { body.isActive = true; await api("products/" + editingId, "PUT", body); toast("Produk diperbarui ✓"); }
+    else { await api("products", "POST", body); toast("Produk ditambahkan ✓"); }
+    closeModals(); loadAll();
+  } catch (e) { toast(e.message); }
+};
+$("saveCat").onclick = async () => {
+  try { await api("categories", "POST", { name: $("cName").value }); toast("Kategori ditambahkan ✓"); closeModals(); loadAll(); }
+  catch (e) { toast(e.message); }
+};
+async function removeProduct(id) {
+  const p = products.find(x => x.id === id);
+  if (!confirm(`Hapus "${p.name}" dari toko?\n(Data pesanan lama tetap aman.)`)) return;
+  try { await api("products/" + id, "DELETE"); toast("Produk dihapus"); loadAll(); } catch (e) { toast(e.message); }
+}
+
+// ---------- Pesanan ----------
+function setTab(name) {
+  $("productsView").classList.toggle("hidden", name !== "products");
+  $("ordersView").classList.toggle("hidden", name !== "orders");
+  $("tabProducts").className = name === "products" ? "btn" : "btn-ghost";
+  $("tabOrders").className = name === "orders" ? "btn" : "btn-ghost";
+  if (name === "orders") loadOrders();
+}
+$("tabProducts").onclick = () => setTab("products");
+$("tabOrders").onclick = () => setTab("orders");
+
+async function loadOrders() {
+  try {
+    const orders = await api("admin/orders");
+    if (!orders.length) { $("orderRows").innerHTML = '<tr><td colspan="6" class="muted" style="text-align:center;padding:30px">Belum ada pesanan.</td></tr>'; return; }
+    $("orderRows").innerHTML = orders.map(o => {
+      let btns = "";
+      if (o.status === "Paid") btns += `<button class="btn" data-st="Shipped" data-id="${o.id}">Kirim</button> `;
+      if (o.status === "Pending" || o.status === "Paid") btns += `<button class="btn-danger" data-st="Cancelled" data-id="${o.id}">Batalkan</button>`;
+      return `<tr>
+        <td>#${o.id}</td>
+        <td><strong>${esc(o.customerName)}</strong><div class="muted">${esc(o.customerEmail)}</div></td>
+        <td class="muted">${o.items.map(i => esc(i.productName) + " ×" + i.quantity).join(", ")}</td>
+        <td>${rupiah(o.totalAmount)}</td>
+        <td><span class="pill ${o.status === "Cancelled" ? "out" : o.status === "Pending" ? "low" : ""}">${o.status}</span></td>
+        <td><div class="actions">${btns}</div></td></tr>`;
+    }).join("");
+    $("orderRows").querySelectorAll("[data-st]").forEach(b => b.onclick = async () => {
+      if (b.dataset.st === "Cancelled" && !confirm("Batalkan pesanan ini? Stok akan dikembalikan.")) return;
+      try { await api(`admin/orders/${b.dataset.id}/status`, "PUT", { status: b.dataset.st }); toast("Status diperbarui ✓"); loadOrders(); loadAll(); }
+      catch (e) { toast(e.message); }
+    });
+  } catch (e) { toast(e.message); }
+}
+showPanel();
+</script>
+</body>
+</html>

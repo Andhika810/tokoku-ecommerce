@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TokoKu</title>
+<style>
+  :root {
+    --bg:#f5f6fa; --surface:#fff; --text:#161a26; --muted:#6b7280; --border:#e6e8ef;
+    --primary:#6366f1; --primary-2:#8b5cf6; --accent:#ec4899; --danger:#dc2626;
+    --shadow:0 8px 30px rgba(20,24,40,.08);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0e1017; --surface:#171a24; --text:#eef0f7; --muted:#9aa1b4; --border:#262a39; --shadow:0 8px 30px rgba(0,0,0,.4); }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--text); }
+  button { font:inherit; cursor:pointer; border:0; border-radius:12px; padding:10px 16px; font-weight:600; transition:.15s; }
+  button:disabled { opacity:.5; cursor:not-allowed; }
+  .btn { background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:#fff; }
+  .btn:hover:not(:disabled) { filter:brightness(1.08); transform:translateY(-1px); }
+  .btn-ghost { background:transparent; color:var(--text); border:1px solid var(--border); }
+  .btn-ghost:hover { background:var(--bg); }
+  .btn-link { background:none; color:var(--danger); padding:4px 8px; }
+
+  header { position:sticky; top:0; z-index:10; backdrop-filter:blur(14px); background:color-mix(in srgb,var(--surface) 80%,transparent);
+    border-bottom:1px solid var(--border); }
+  .nav { max-width:1200px; margin:0 auto; padding:12px 24px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  .brand { font-size:1.35rem; font-weight:800; background:linear-gradient(135deg,var(--primary),var(--accent)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .actions { display:flex; align-items:center; gap:10px; }
+  .muted { color:var(--muted); font-size:.85rem; }
+  #cartCount { background:#fff; color:var(--primary); border-radius:999px; padding:1px 8px; margin-left:6px; font-size:.8rem; }
+
+  .wrap { max-width:1200px; margin:0 auto; padding:0 24px; }
+  .hero { margin-top:24px; border-radius:28px; padding:48px 40px; color:#fff; position:relative; overflow:hidden;
+    background:radial-gradient(circle at 85% 20%,rgba(255,255,255,.25),transparent 40%),linear-gradient(135deg,#4f46e5,#8b5cf6 55%,#ec4899); }
+  .hero h1 { margin:0 0 8px; font-size:clamp(1.7rem,4vw,2.6rem); letter-spacing:-.02em; }
+  .hero p { margin:0 0 22px; opacity:.9; }
+  .search { display:flex; max-width:520px; background:var(--surface); border-radius:16px; padding:6px; box-shadow:var(--shadow); }
+  .search input { flex:1; border:0; outline:0; background:transparent; color:var(--text); font:inherit; padding:10px 14px; }
+
+  .toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin:26px 0 16px; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:999px; padding:8px 16px; }
+  .chip.active { background:var(--text); color:var(--bg); border-color:var(--text); }
+  select { background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font:inherit; }
+
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:22px; padding-bottom:70px; }
+  .card { background:var(--surface); border:1px solid var(--border); border-radius:20px; overflow:hidden; display:flex; flex-direction:column;
+    transition:transform .2s, box-shadow .2s; animation:rise .4s both; }
+  .card:hover { transform:translateY(-5px); box-shadow:var(--shadow); }
+  @keyframes rise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  .img { position:relative; aspect-ratio:4/3; background:linear-gradient(135deg,var(--primary),var(--accent)); overflow:hidden; }
+  .img img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .4s; }
+  .card:hover .img img { transform:scale(1.06); }
+  .tag { position:absolute; top:10px; left:10px; background:rgba(0,0,0,.55); color:#fff; font-size:.72rem; padding:4px 10px; border-radius:999px; backdrop-filter:blur(6px); }
+  .low { position:absolute; top:10px; right:10px; background:#f59e0b; color:#fff; font-size:.72rem; padding:4px 10px; border-radius:999px; font-weight:700; }
+  .body { padding:16px; display:flex; flex-direction:column; gap:4px; flex:1; }
+  .title { font-weight:700; }
+  .desc { color:var(--muted); font-size:.85rem; min-height:2.5em; }
+  .foot { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:12px; }
+  .price { font-weight:800; font-size:1.1rem; }
+  .skeleton { height:330px; border-radius:20px; background:linear-gradient(90deg,var(--border),var(--surface),var(--border)); background-size:200% 100%; animation:sh 1.2s infinite; }
+  @keyframes sh { to { background-position:-200% 0; } }
+  .empty { grid-column:1/-1; text-align:center; color:var(--muted); padding:60px 0; }
+
+  .overlay { position:fixed; inset:0; background:rgba(8,10,18,.5); backdrop-filter:blur(3px); opacity:0; pointer-events:none; transition:.2s; z-index:20; }
+  .overlay.open { opacity:1; pointer-events:auto; }
+  .drawer { position:fixed; top:0; right:0; height:100%; width:min(440px,100%); background:var(--surface); z-index:30; transform:translateX(100%);
+    transition:transform .28s; display:flex; flex-direction:column; box-shadow:var(--shadow); }
+  .drawer.open { transform:none; }
+  .d-head { padding:18px 22px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
+  .tabs { display:flex; gap:6px; padding:10px 22px 0; }
+  .tab { background:none; color:var(--muted); border-radius:0; border-bottom:2px solid transparent; padding:8px 12px; }
+  .tab.active { color:var(--primary); border-color:var(--primary); }
+  .d-body { padding:8px 22px; overflow-y:auto; flex:1; }
+  .row { display:flex; gap:12px; align-items:center; padding:14px 0; border-bottom:1px solid var(--border); }
+  .row img { width:56px; height:56px; border-radius:12px; object-fit:cover; background:var(--border); }
+  .row .grow { flex:1; }
+  .d-foot { padding:18px 22px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:12px; font-weight:800; }
+  .badge { font-size:.72rem; padding:3px 10px; border-radius:999px; font-weight:700; background:#fde68a; color:#92400e; }
+  .badge.Paid { background:#bbf7d0; color:#166534; }
+
+  .modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-46%); width:min(400px,92%); background:var(--surface); border-radius:24px; padding:28px;
+    z-index:40; opacity:0; pointer-events:none; transition:.2s; box-shadow:var(--shadow); }
+  .modal.open { opacity:1; pointer-events:auto; transform:translate(-50%,-50%); }
+  .modal h3 { margin:0 0 16px; font-size:1.3rem; }
+  .modal input { width:100%; padding:12px 14px; margin-bottom:10px; border-radius:12px; border:1px solid var(--border); background:var(--bg); color:var(--text); font:inherit; }
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--text); color:var(--bg); padding:12px 22px;
+    border-radius:14px; z-index:50; opacity:0; pointer-events:none; transition:.25s; font-weight:600; }
+  .toast.show { opacity:1; transform:translateX(-50%); }
+  footer { text-align:center; color:var(--muted); padding:30px 0 50px; font-size:.85rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="brand">🛍️ TokoKu</div>
+    <div class="actions">
+      <span id="userLabel" class="muted"></span>
+      <button class="btn-ghost" id="authBtn">Masuk</button>
+      <button class="btn" id="cartBtn">🛒 Keranjang<span id="cartCount">0</span></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <h1>Temukan produk favoritmu</h1>
+    <p>Pilihan terbaik dengan harga bersahabat, dikirim cepat.</p>
+    <div class="search"><input id="searchInput" placeholder="Cari produk, misalnya “keyboard”…"></div>
+  </section>
+
+  <div class="toolbar">
+    <div class="chips" id="chips"></div>
+    <select id="sortSelect">
+      <option value="new">Terbaru</option>
+      <option value="low">Harga terendah</option>
+      <option value="high">Harga tertinggi</option>
+      <option value="name">Nama A–Z</option>
+    </select>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</div>
+
+<footer>© TokoKu — Andhika Satya </footer>
+
+<div class="overlay" id="overlay"></div>
+
+<aside class="drawer" id="drawer">
+  <div class="d-head"><strong>Belanjaanku</strong><button class="btn-ghost" id="closeDrawer">Tutup</button></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="cart">Keranjang</button>
+    <button class="tab" data-tab="orders">Pesanan</button>
+  </div>
+  <div class="d-body" id="drawerBody"></div>
+  <div class="d-foot" id="drawerFooter"></div>
+</aside>
+
+<div class="modal" id="authModal">
+  <h3 id="authTitle">Masuk</h3>
+  <input id="nameInput" placeholder="Nama" style="display:none">
+  <input id="emailInput" type="email" placeholder="Email">
+  <input id="passInput" type="password" placeholder="Password (min. 6 karakter)">
+  <button class="btn" id="authSubmit" style="width:100%">Masuk</button>
+  <p class="muted" style="text-align:center;margin-bottom:0"><a href="#" id="switchAuth">Belum punya akun? Daftar</a></p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const rupiah = n => "Rp " + Number(n).toLocaleString("id-ID");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const img = p => p.imageUrl || ("https://picsum.photos/seed/" + encodeURIComponent(p.name) + "/600/450");
+
+let token = null, userName = null, isRegister = false;
+let products = [], categories = [], productMap = {};
+let activeCat = 0, activeTab = "cart", query = "", sortBy = "new";
+try { token = localStorage.getItem("token"); userName = localStorage.getItem("name"); } catch {}
+
+function toast(msg) {
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 2200);
+}
+
+async function api(path, method = "GET", body) {
+  const headers = {};
+  if (body) headers["Content-Type"] = "application/json";
+  if (token) headers["Authorization"] = "Bearer " + token;
+  const res = await fetch("/api/" + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const text = await res.text();
+  let data = null;
+  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+  if (res.status === 401) { logout(false); throw new Error("Silakan masuk dulu."); }
+  if (!res.ok) throw new Error(typeof data === "string" ? data : (data?.title || "Terjadi kesalahan."));
+  return data;
+}
+
+// ---------- Produk ----------
+async function loadProducts() {
+  $("grid").innerHTML = '<div class="skeleton"></div>'.repeat(8);
+  [products, categories] = await Promise.all([api("products"), api("categories")]);
+  productMap = Object.fromEntries(products.map(p => [p.id, p]));
+  renderChips(); renderProducts();
+}
+function renderChips() {
+  const all = [{ id: 0, name: "Semua" }, ...categories];
+  $("chips").innerHTML = all.map(c => `<button class="chip ${c.id === activeCat ? "active" : ""}" data-id="${c.id}">${esc(c.name)}</button>`).join("");
+  $("chips").querySelectorAll(".chip").forEach(b => b.onclick = () => { activeCat = +b.dataset.id; renderChips(); renderProducts(); });
+}
+function renderProducts() {
+  let list = products.filter(p =>
+    (activeCat === 0 || p.categoryId === activeCat) &&
+    (p.name + " " + p.description).toLowerCase().includes(query.toLowerCase()));
+  if (sortBy === "low") list.sort((a, b) => a.price - b.price);
+  else if (sortBy === "high") list.sort((a, b) => b.price - a.price);
+  else if (sortBy === "name") list.sort((a, b) => a.name.localeCompare(b.name));
+  else list.sort((a, b) => b.id - a.id);
+
+  if (!list.length) { $("grid").innerHTML = '<div class="empty">Produk tidak ditemukan 🔍</div>'; return; }
+  $("grid").innerHTML = list.map((p, i) => `
+    <div class="card" style="animation-delay:${i * 40}ms">
+      <div class="img">
+        <img src="${esc(img(p))}" alt="${esc(p.name)}" loading="lazy" onerror="this.style.display='none'">
+        <span class="tag">${esc(p.categoryName)}</span>
+        ${p.stock > 0 && p.stock <= 5 ? `<span class="low">Sisa ${p.stock}</span>` : ""}
+      </div>
+      <div class="body">
+        <div class="title">${esc(p.name)}</div>
+        <div class="desc">${esc(p.description)}</div>
+        <div class="foot">
+          <div class="price">${rupiah(p.price)}</div>
+          <button class="btn" data-add="${p.id}" ${p.stock < 1 ? "disabled" : ""}>${p.stock < 1 ? "Habis" : "+ Keranjang"}</button>
+        </div>
+      </div>
+    </div>`).join("");
+  $("grid").querySelectorAll("[data-add]").forEach(b => b.onclick = () => addToCart(+b.dataset.add));
+}
+$("searchInput").oninput = e => { query = e.target.value; renderProducts(); };
+$("sortSelect").onchange = e => { sortBy = e.target.value; renderProducts(); };
+
+// ---------- Auth ----------
+function updateHeader() {
+  $("authBtn").textContent = token ? "Keluar" : "Masuk";
+  $("userLabel").textContent = token && userName ? "Hai, " + userName : "";
+  if (!token) $("cartCount").textContent = "0"; else refreshCartCount();
+}
+function openAuth(register) {
+  isRegister = register;
+  $("authTitle").textContent = register ? "Daftar" : "Masuk";
+  $("authSubmit").textContent = register ? "Daftar" : "Masuk";
+  $("nameInput").style.display = register ? "block" : "none";
+  $("switchAuth").textContent = register ? "Sudah punya akun? Masuk" : "Belum punya akun? Daftar";
+  $("authModal").classList.add("open"); $("overlay").classList.add("open");
+}
+function closeAll() { ["authModal", "drawer", "overlay"].forEach(i => $(i).classList.remove("open")); }
+function logout(show = true) {
+  token = null; userName = null;
+  try { localStorage.removeItem("token"); localStorage.removeItem("name"); } catch {}
+  updateHeader(); if (show) toast("Berhasil keluar.");
+}
+$("authBtn").onclick = () => token ? logout() : openAuth(false);
+$("switchAuth").onclick = e => { e.preventDefault(); openAuth(!isRegister); };
+$("authSubmit").onclick = async () => {
+  try {
+    const body = { email: $("emailInput").value, password: $("passInput").value };
+    if (isRegister) body.name = $("nameInput").value;
+    const r = await api(isRegister ? "auth/register" : "auth/login", "POST", body);
+    token = r.token; userName = r.name;
+    try { localStorage.setItem("token", token); localStorage.setItem("name", userName); } catch {}
+    closeAll(); updateHeader(); toast("Selamat datang, " + r.name + "!");
+  } catch (e) { toast(e.message); }
+};
+
+// ---------- Keranjang & pesanan ----------
+async function addToCart(id) {
+  if (!token) { openAuth(false); toast("Masuk dulu ya."); return; }
+  try { await api("cart", "POST", { productId: id, quantity: 1 }); toast("Ditambahkan ke keranjang ✓"); refreshCartCount(); }
+  catch (e) { toast(e.message); }
+}
+async function refreshCartCount() {
+  try { const c = await api("cart"); $("cartCount").textContent = c.items.reduce((s, i) => s + i.quantity, 0); } catch {}
+}
+function openDrawer() {
+  if (!token) { openAuth(false); toast("Masuk dulu ya."); return; }
+  $("drawer").classList.add("open"); $("overlay").classList.add("open"); renderDrawer();
+}
+async function renderDrawer() {
+  document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab === activeTab));
+  try {
+    if (activeTab === "cart") {
+      const c = await api("cart");
+      $("drawerBody").innerHTML = c.items.length ? c.items.map(i => `
+        <div class="row">
+          <img src="${esc(productMap[i.productId] ? img(productMap[i.productId]) : "")}" alt="" onerror="this.style.visibility='hidden'">
+          <div class="grow"><strong>${esc(i.productName)}</strong><div class="muted">${i.quantity} × ${rupiah(i.unitPrice)}</div></div>
+          <div style="text-align:right"><strong>${rupiah(i.subtotal)}</strong><br><button class="btn-link" data-rm="${i.productId}">Hapus</button></div>
+        </div>`).join("") : '<div class="empty">Keranjang masih kosong 🛒</div>';
+      $("drawerFooter").innerHTML = c.items.length
+        ? `<div>Total<br><span style="font-size:1.25rem">${rupiah(c.total)}</span></div><button class="btn" id="checkoutBtn">Checkout</button>` : "";
+      $("drawerBody").querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => {
+        try { await api("cart/" + b.dataset.rm, "DELETE"); renderDrawer(); refreshCartCount(); } catch (e) { toast(e.message); }
+      });
+      const co = $("checkoutBtn");
+      if (co) co.onclick = async () => {
+        try { await api("orders/checkout", "POST"); toast("Pesanan dibuat!"); activeTab = "orders"; refreshCartCount(); loadProducts(); renderDrawer(); }
+        catch (e) { toast(e.message); }
+      };
+    } else {
+      const orders = await api("orders");
+      $("drawerFooter").innerHTML = "";
+      $("drawerBody").innerHTML = orders.length ? orders.map(o => `
+        <div class="row" style="align-items:flex-start"><div class="grow">
+          <strong>Pesanan #${o.id}</strong> <span class="badge ${o.status}">${o.status}</span>
+          <div class="muted">${o.items.map(i => esc(i.productName) + " ×" + i.quantity).join(", ")}</div>
+          <div class="muted">${new Date(o.createdAt).toLocaleString("id-ID")}</div></div>
+          <div style="text-align:right"><strong>${rupiah(o.totalAmount)}</strong><br>
+          ${o.status === "Pending" ? `<button class="btn" data-pay="${o.id}" style="margin-top:6px;padding:6px 14px">Bayar</button>` : ""}</div></div>`).join("")
+        : '<div class="empty">Belum ada pesanan 📦</div>';
+      $("drawerBody").querySelectorAll("[data-pay]").forEach(b => b.onclick = async () => {
+        try { await api("orders/" + b.dataset.pay + "/pay", "POST"); toast("Pembayaran berhasil ✓"); renderDrawer(); } catch (e) { toast(e.message); }
+      });
+    }
+  } catch (e) { toast(e.message); }
+}
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => { activeTab = t.dataset.tab; renderDrawer(); });
+$("cartBtn").onclick = openDrawer;
+$("closeDrawer").onclick = closeAll;
+$("overlay").onclick = closeAll;
+
+loadProducts().catch(e => toast(e.message));
+updateHeader();
+</script>
+</body>
+</html>
